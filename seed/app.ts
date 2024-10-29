@@ -26,7 +26,7 @@ async function main() {
         }
     });
 
-    const superUser = await prisma.user.create({
+    await prisma.user.create({
         data: {
             name: 'Super',
             username: 'super',
@@ -36,12 +36,21 @@ async function main() {
         }
     });
 
-    const zenstack = enhance(prisma, { user: { id: superUser.id } });
+    const user = await (new PrismaClient()).user.findUnique({
+        where: { id: 1 }, // << 1 is the id of the first user
+        include: { roles: true }, // Pastikan roles ter-load
+    });
+
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    const zenstack = enhance(prisma, { user });
 
     // Menambahkan user dengan role Admin
-    const user = await zenstack.user.update({
+    await zenstack.user.update({
         where: {
-            id: superUser.id,
+            id: user.id,
         },
         data: {
             roles: {

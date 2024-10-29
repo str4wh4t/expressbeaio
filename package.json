@@ -12,7 +12,8 @@
     "generate": "npx zenstack generate && npx prisma db push",
     "seed": "ts-node seed/app.ts && ts-node seed/roles.ts && ts-node seed/permissions.ts",
     "seed:roles": "ts-node seed/roles.ts",
-    "seed:permissions": "ts-node seed/permissions.ts"
+    "seed:permissions": "ts-node seed/permissions.ts",
+    "seed:units": "ts-node seed/units.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",

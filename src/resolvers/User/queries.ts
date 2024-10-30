@@ -1,69 +1,54 @@
-import {
-  booleanArg,
-  intArg,
-  list,
-  nonNull,
-  nullable,
-  objectType,
-  queryField,
-  stringArg,
-} from 'nexus';
+import { queryField, nonNull, intArg } from 'nexus';
 import { User } from 'nexus-prisma';
-
-export const getListUser = queryField('getListUser', {
-  type: 'ListUserType',
-  description: 'Get list of user',
-  args: {
-    take: nullable(intArg()),
-    skip: nullable(intArg()),
-    search: nullable(stringArg()),
-    sortBy: nullable(stringArg()),
-    descending: nullable(booleanArg()),
-  },
-  resolve: async (
-    _,
-    { take, skip, search, sortBy, descending },
-    { prisma },
-  ) => {
-
-    const where = search ? { name: { contains: search } } : {};
-
-    const orderByArg = sortBy
-      ? {
-        [sortBy]: descending ? 'desc' : 'asc',
-      }
-      : {};
-
-    const data = await prisma.user.findMany({
-      where,
-      orderBy: orderByArg,
-      take: take ? take : 10,
-      skip: skip ? skip : 0,
-    });
-
-    const total = await prisma.user.count({
-      where,
-    });
-
-    return {
-      data,
-      total,
-    };
-  },
-});
-
+import { UserWhereInput } from './inputs';
 
 export const getUser = queryField('getUser', {
   type: User.$name,
-  description: 'Get user by id',
+  description: 'Get a single user by ID',
   args: {
     id: nonNull(intArg()),
   },
   resolve: async (_, { id }, { prisma }) => {
-    return await prisma.user.findUnique({
-      where: {
-        id,
-      }
+    const user = await prisma.user.findUnique({
+      where: { id },
     });
+    if (!user) throw new Error('User not found');
+    return user;
+  },
+});
+
+export const getUsers = queryField('getUsers', {
+  type: 'UserList',
+  description: 'Get a paginated list of users with optional filtering and sorting',
+  args: {
+    where: UserWhereInput,
+  },
+  resolve: async (_, { where }, { prisma }) => {
+    const { search, sortBy, descending, take = 10, skip = 0 } = where || {};
+
+    const whereClause = search
+      ? {
+        OR: [
+          { name: { contains: search } },
+          { username: { contains: search } },
+          { identity: { contains: search } },
+          { email: { contains: search } },
+        ],
+      }
+      : {};
+
+    const orderBy = sortBy ? { [sortBy]: descending ? 'desc' : 'asc' } : undefined;
+
+    const [data, total] = await Promise.all([
+      prisma.user.findMany({
+        where: whereClause,
+        orderBy,
+        take,
+        skip,
+      }),
+      prisma.user.count({ where: whereClause }),
+    ]);
+
+    return { data, total };
   },
 });

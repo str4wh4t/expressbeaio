@@ -1,20 +1,30 @@
-import { inputObjectType, list, objectType } from 'nexus';
+import { objectType } from 'nexus';
 import { Permission } from 'nexus-prisma';
 
-export const PermissionType = objectType({
+export const PermissionObject = objectType({
     name: Permission.$name,
-    description: Permission.$description,
+    description: 'Object representing a permission in the system',
     definition(t) {
         t.field(Permission.id);
         t.field(Permission.name);
         t.field(Permission.description);
-    }
+        t.field(Permission.roles);
+        t.field(Permission.created_at);
+        t.field(Permission.updated_at);
+
+    },
 });
 
-export const ListPermissionType = objectType({
-    name: 'ListPermissionType',
+export const PermissionListObject = objectType({
+    name: 'PermissionList',
+    description: 'Object representing a paginated list of permissions',
     definition(t) {
-        t.field('data', { type: list(Permission.$name) });
-        t.int('total');
+        t.nonNull.list.nonNull.field('data', {
+            type: Permission.$name,
+            description: 'Array of permission objects'
+        });
+        t.nonNull.int('total', {
+            description: 'Total count of permissions matching the query'
+        });
     },
 });

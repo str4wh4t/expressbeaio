@@ -1,4 +1,4 @@
-export * from './mutations';
-export * from './queries';
 export * from './objects';
 export * from './inputs';
+export * from './queries';
+export * from './mutations';

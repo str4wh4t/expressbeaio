@@ -1,51 +1,53 @@
-import {
-  booleanArg,
-  intArg,
-  list,
-  nonNull,
-  nullable,
-  objectType,
-  queryField,
-  stringArg,
-} from 'nexus';
+import { queryField, nonNull, intArg } from 'nexus';
+import { Unit } from 'nexus-prisma';
+import { UnitWhereInput } from './inputs';
 
-export const getListUnit = queryField('getListUnit', {
-  type: 'ListUnitType',
+export const getUnit = queryField('getUnit', {
+  type: Unit.$name,
+  description: 'Get a single unit by ID',
   args: {
-    take: nullable(intArg()),
-    skip: nullable(intArg()),
-    search: nullable(stringArg()),
-    sortBy: nullable(stringArg()),
-    descending: nullable(booleanArg()),
+    id: nonNull(intArg()),
   },
-  resolve: async (
-    _,
-    { take, skip, search, sortBy, descending },
-    { prisma },
-  ) => {
+  resolve: async (_, { id }, { prisma }) => {
+    const unit = await prisma.unit.findUnique({
+      where: { id },
+    });
+    if (!unit) throw new Error('Unit not found');
+    return unit;
+  },
+});
 
-    const where = search ? { name: { contains: search } } : {};
+export const getUnits = queryField('getUnits', {
+  type: 'UnitList',
+  description: 'Get a paginated list of units with optional filtering and sorting',
+  args: {
+    where: UnitWhereInput,
+  },
+  resolve: async (_, { where }, { prisma }) => {
+    const { search, sortBy, descending, take = 10, skip = 0 } = where || {};
 
-    const orderByArg = sortBy
+    const whereClause = search
       ? {
-        [sortBy]: descending ? 'desc' : 'asc',
+        OR: [
+          { codename: { contains: search } },
+          { name: { contains: search } },
+          { description: { contains: search } },
+        ],
       }
       : {};
 
-    const data = await prisma.unit.findMany({
-      where,
-      orderBy: orderByArg,
-      take: take ? take : 10,
-      skip: skip ? skip : 0,
-    });
+    const orderBy = sortBy ? { [sortBy]: descending ? 'desc' : 'asc' } : undefined;
 
-    const total = await prisma.unit.count({
-      where,
-    });
+    const [data, total] = await Promise.all([
+      prisma.unit.findMany({
+        where: whereClause,
+        orderBy,
+        take,
+        skip,
+      }),
+      prisma.unit.count({ where: whereClause }),
+    ]);
 
-    return {
-      data,
-      total,
-    };
+    return { data, total };
   },
 });

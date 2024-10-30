@@ -1,51 +1,52 @@
-import {
-  booleanArg,
-  intArg,
-  list,
-  nonNull,
-  nullable,
-  queryField,
-  stringArg,
-} from 'nexus';
+import { queryField, nonNull, intArg } from 'nexus';
+import { Role } from 'nexus-prisma';
+import { RoleWhereInput } from './inputs';
 
-export const getListRole = queryField('getListRole', {
-  type: 'ListRoleType',
-  description: 'Get list of role',
+export const getRole = queryField('getRole', {
+  type: Role.$name,
+  description: 'Get a single role by ID',
   args: {
-    take: nullable(intArg()),
-    skip: nullable(intArg()),
-    search: nullable(stringArg()),
-    sortBy: nullable(stringArg()),
-    descending: nullable(booleanArg()),
+    id: nonNull(intArg()),
   },
-  resolve: async (
-    _,
-    { take, skip, search, sortBy, descending },
-    { prisma },
-  ) => {
+  resolve: async (_, { id }, { prisma }) => {
+    const role = await prisma.role.findUnique({
+      where: { id },
+    });
+    if (!role) throw new Error('Role not found');
+    return role;
+  },
+});
 
-    const where = search ? { name: { contains: search } } : {};
+export const getRoles = queryField('getRoles', {
+  type: 'RoleList',
+  description: 'Get a paginated list of roles with optional filtering and sorting',
+  args: {
+    where: RoleWhereInput,
+  },
+  resolve: async (_, { where }, { prisma }) => {
+    const { search, sortBy, descending, take = 10, skip = 0 } = where || {};
 
-    const orderByArg = sortBy
+    const whereClause = search
       ? {
-        [sortBy]: descending ? 'desc' : 'asc',
+        OR: [
+          { name: { contains: search } },
+          { description: { contains: search } },
+        ],
       }
       : {};
 
-    const data = await prisma.role.findMany({
-      where,
-      orderBy: orderByArg,
-      take: take ? take : 10,
-      skip: skip ? skip : 0,
-    });
+    const orderBy = sortBy ? { [sortBy]: descending ? 'desc' : 'asc' } : undefined;
 
-    const total = await prisma.role.count({
-      where,
-    });
+    const [data, total] = await Promise.all([
+      prisma.role.findMany({
+        where: whereClause,
+        orderBy,
+        take,
+        skip,
+      }),
+      prisma.role.count({ where: whereClause }),
+    ]);
 
-    return {
-      data,
-      total,
-    };
+    return { data, total };
   },
 });

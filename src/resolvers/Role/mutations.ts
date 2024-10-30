@@ -1,67 +1,61 @@
-import { intArg, mutationField, nonNull, list } from 'nexus';
+import { mutationField, nonNull, intArg, list } from 'nexus';
 import { Role } from 'nexus-prisma';
-import { RoleCreateInputType, RoleUpdateInputType } from './inputs';
+import { RoleCreateInput, RoleUpdateInput } from './inputs';
 
 export const createRole = mutationField('createRole', {
     type: Role.$name,
-    description: 'Create role',
+    description: 'Create a new role',
     args: {
-        data: nonNull(RoleCreateInputType),
+        data: nonNull(RoleCreateInput),
     },
-    resolve: async (_, { data }, ctx) => {
+    resolve: async (_, { data }, { prisma }) => {
         try {
-            return await ctx.prisma.role.create({
+            return await prisma.role.create({
                 data,
             });
         } catch (error) {
-            throw new Error('Gagal menambahkan role : ' + error);
+            throw new Error('Failed to create role: ' + error);
         }
     },
 });
 
 export const updateRole = mutationField('updateRole', {
     type: Role.$name,
-    description: 'Update role',
+    description: 'Update an existing role',
     args: {
-        roleId: nonNull(intArg()),
-        data: nonNull(RoleUpdateInputType),
+        id: nonNull(intArg()),
+        data: nonNull(RoleUpdateInput),
     },
-    resolve: async (_, { roleId, data }, { prisma }) => {
-        // Mengupdate role berdasarkan roleId
+    resolve: async (_, { id, data }, { prisma }) => {
         try {
             return await prisma.role.update({
-                where: {
-                    id: roleId,
-                },
+                where: { id },
                 data,
             });
         } catch (error) {
-            throw new Error('Gagal memperbarui role : ' + error);
+            throw new Error('Failed to update role: ' + error);
         }
     },
 });
 
 export const deleteRole = mutationField('deleteRole', {
-    type: 'Boolean',
-    description: 'Delete role',
+    type: Role.$name,
+    description: 'Delete an existing role',
     args: {
-        roleId: nonNull(intArg()),
+        id: nonNull(intArg()),
     },
-    resolve: async (_, { roleId }, { prisma }) => {
+    resolve: async (_, { id }, { prisma }) => {
         try {
-            await prisma.role.delete({
-                where: {
-                    id: roleId,
-                },
+            return await prisma.role.delete({
+                where: { id },
             });
-            return true;
         } catch (error) {
-            throw new Error('Gagal menghapus role : ' + error);
+            throw new Error('Failed to delete role: ' + error);
         }
     },
 });
 
-export const assignPermission = mutationField('assignPermission', {
+export const assignPermissions = mutationField('assignPermissions', {
     type: Role.$name,
     description: 'Assign role to permission',
     args: {

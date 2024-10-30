@@ -1,9 +1,9 @@
-import { list, objectType } from 'nexus';
+import { objectType } from 'nexus';
 import { Role } from 'nexus-prisma';
 
-export const RoleType = objectType({
+export const RoleObject = objectType({
     name: Role.$name,
-    description: Role.$description,
+    description: 'Object representing a role in the system',
     definition(t) {
         t.field(Role.id);
         t.field(Role.name);
@@ -11,13 +11,21 @@ export const RoleType = objectType({
         t.field(Role.users);
         t.field(Role.permissions);
         t.field(Role.roleUnits);
-    }
+        t.field(Role.created_at);
+        t.field(Role.updated_at);
+    },
 });
 
-export const ListRoleType = objectType({
-    name: 'ListRoleType',
+export const RoleListObject = objectType({
+    name: 'RoleList',
+    description: 'Object representing a paginated list of roles',
     definition(t) {
-        t.field('data', { type: list(Role.$name) });
-        t.int('total');
+        t.nonNull.list.nonNull.field('data', {
+            type: Role.$name,
+            description: 'Array of role objects'
+        });
+        t.nonNull.int('total', {
+            description: 'Total count of roles matching the query'
+        });
     },
 });

@@ -1,64 +1,56 @@
-import { intArg, mutationField, nonNull } from 'nexus';
+import { mutationField, nonNull, intArg } from 'nexus';
 import { Permission } from 'nexus-prisma';
-import { PermissionCreateInputType, PermissionUpdateInputType } from './inputs';
-import { permission } from 'process';
+import { PermissionCreateInput, PermissionUpdateInput } from './inputs';
 
 export const createPermission = mutationField('createPermission', {
   type: Permission.$name,
+  description: 'Create a new permission',
   args: {
-    data: nonNull(PermissionCreateInputType),
+    data: nonNull(PermissionCreateInput),
   },
-  description: 'Create permission',
-  resolve: async (_, { data }, ctx) => {
+  resolve: async (_, { data }, { prisma }) => {
     try {
-      return await ctx.prisma.permission.create({
+      return await prisma.permission.create({
         data,
       });
     } catch (error) {
-      throw new Error('Gagal menambahkan permission : ' + error);
+      throw new Error('Failed to create permission: ' + error);
     }
   },
-
 });
 
 export const updatePermission = mutationField('updatePermission', {
-  type: Permission.$name,  // Mengembalikan objek Permission yang diperbarui
-  description: 'Update permission',
+  type: Permission.$name,
+  description: 'Update an existing permission',
   args: {
-    permissionId: nonNull(intArg()),
-    data: nonNull(PermissionUpdateInputType),
+    id: nonNull(intArg()),
+    data: nonNull(PermissionUpdateInput),
   },
-  resolve: async (_, { permissionId, data }, { prisma }) => {
-    // Mengupdate permission berdasarkan permissionId
+  resolve: async (_, { id, data }, { prisma }) => {
     try {
       return await prisma.permission.update({
-        where: {
-          id: permissionId,  // Mencari permission berdasarkan id
-        },
+        where: { id },
         data,
       });
     } catch (error) {
-      throw new Error('Gagal memperbarui permission : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to update permission: ' + error);
     }
   },
 });
 
 export const deletePermission = mutationField('deletePermission', {
-  type: 'Boolean',  // Mengembalikan true jika berhasil dihapus
-  description: 'Delete permission',
+  type: Permission.$name,
+  description: 'Delete an existing permission',
   args: {
-    permissionId: nonNull(intArg()),
+    id: nonNull(intArg()),
   },
-  resolve: async (_, { permissionId }, { prisma }) => {
+  resolve: async (_, { id }, { prisma }) => {
     try {
-      await prisma.permission.delete({
-        where: {
-          id: permissionId,
-        },
+      return await prisma.permission.delete({
+        where: { id },
       });
-      return true;  // Mengembalikan true jika berhasil
     } catch (error) {
-      throw new Error('Gagal menghapus permission : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to delete permission: ' + error);
     }
   },
 });

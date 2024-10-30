@@ -1,70 +1,63 @@
 import { intArg, stringArg, mutationField, nonNull, list } from 'nexus';
 import { generateToken, JwtPayload } from '../../utils/jwt';
-import { Role, User } from 'nexus-prisma';
-import { UserCreateInputType, UserUpdateInputType } from './inputs';
+import { User } from 'nexus-prisma';
+import { UserChangePasswordInput, UserCreateInput, UserUpdateInput } from './inputs';
 import { compare } from 'bcryptjs';
 import { Context } from '../../context';
 import { PASSWORD_LOGIN_DEFAULT } from '../../utils/constants';
-import { permission } from 'process';
 import { PrismaClient } from '@prisma/client';
 import { getEdukData } from '../../datasources/eduk';
 
 
 export const createUser = mutationField('createUser', {
   type: User.$name,
-  description: 'Create user',
+  description: 'Create a new user',
   args: {
-    data: nonNull(UserCreateInputType),
+    data: nonNull(UserCreateInput),
   },
-  resolve: async (_, { data }, ctx) => {
+  resolve: async (_, { data }, { prisma }) => {
     try {
-      return await ctx.prisma.user.create({
+      return await prisma.user.create({
         data,
       });
     } catch (error) {
-      throw new Error('Gagal menambahkan user : ' + error);
+      throw new Error('Failed to create user: ' + error);
     }
   },
 });
 
 export const updateUser = mutationField('updateUser', {
-  type: User.$name,  // Mengembalikan objek User yang diperbarui
-  description: 'Update user',
+  type: User.$name,
+  description: 'Update an existing user',
   args: {
-    userId: nonNull(intArg()),
-    data: nonNull(UserUpdateInputType),
+    id: nonNull(intArg()),
+    data: nonNull(UserUpdateInput),
   },
-  resolve: async (_, { userId, data }, { prisma }) => {
-    // Mengupdate user berdasarkan id
+  resolve: async (_, { id, data }, { prisma }) => {
     try {
       return await prisma.user.update({
-        where: {
-          id: userId,  // Mencari user berdasarkan id
-        },
+        where: { id },
         data,
       });
     } catch (error) {
-      throw new Error('Gagal memperbarui user : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to update user: ' + error);
     }
   },
 });
 
 export const deleteUser = mutationField('deleteUser', {
-  type: 'Boolean',  // Mengembalikan true jika berhasil dihapus
-  description: 'Delete user',
+  type: User.$name,
+  description: 'Delete an existing user',
   args: {
-    userId: nonNull(intArg()),
+    id: nonNull(intArg()),
   },
-  resolve: async (_, { userId }, { prisma }) => {
+  resolve: async (_, { id }, { prisma }) => {
     try {
-      await prisma.user.delete({
-        where: {
-          id: userId,
-        },
+      return await prisma.user.delete({
+        where: { id },
       });
-      return true;  // Mengembalikan true jika berhasil
     } catch (error) {
-      throw new Error('Gagal menghapus user : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to delete user: ' + error);
     }
   },
 });
@@ -119,6 +112,33 @@ export const login = mutationField('login', {
       return generateToken(payload);
     } catch (error) {
       throw new Error('Failed to login: ' + error);
+    }
+  },
+});
+
+export const changePassword = mutationField('changePassword', {
+  type: User.$name,
+  description: 'Change user password',
+  args: {
+    id: nonNull(intArg({
+      description: 'ID of the user'
+    })),
+    data: nonNull(UserChangePasswordInput),
+  },
+  resolve: async (_, { id, data }, { prisma }) => {
+    try {
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (!user) throw new Error('User not found');
+
+      const validPassword = await compare(data.currentPassword, user.password);
+      if (!validPassword) throw new Error('Current password is incorrect');
+
+      return await prisma.user.update({
+        where: { id },
+        data: { password: data.newPassword },
+      });
+    } catch (error) {
+      throw new Error('Failed to change password: ' + error);
     }
   },
 });
@@ -344,7 +364,7 @@ export const loginsso = mutationField('loginsso', {
       },
     }).then((res) => res.json());
 
-    console.log(data);
+    // console.log(data);
 
     if (data.error) {
       throw new Error(data.error.message)

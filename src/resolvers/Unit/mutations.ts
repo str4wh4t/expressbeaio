@@ -1,63 +1,56 @@
-import { intArg, mutationField, nonNull } from 'nexus';
+import { mutationField, nonNull, intArg } from 'nexus';
 import { Unit } from 'nexus-prisma';
-import { UnitCreateInputType, UnitUpdateInputType } from './inputs';
+import { UnitCreateInput, UnitUpdateInput } from './inputs';
 
 export const createUnit = mutationField('createUnit', {
   type: Unit.$name,
+  description: 'Create a new unit',
   args: {
-    data: nonNull(UnitCreateInputType),
+    data: nonNull(UnitCreateInput),
   },
-  description: 'Create unit',
-  resolve: async (_, { data }, ctx) => {
+  resolve: async (_, { data }, { prisma }) => {
     try {
-      return await ctx.prisma.unit.create({
+      return await prisma.unit.create({
         data,
       });
     } catch (error) {
-      throw new Error('Gagal menambahkan unit : ' + error);
+      throw new Error('Failed to create unit: ' + error);
     }
   },
-
 });
 
 export const updateUnit = mutationField('updateUnit', {
-  type: Unit.$name,  // Mengembalikan objek Unit yang diperbarui
-  description: 'Update unit',
+  type: Unit.$name,
+  description: 'Update an existing unit',
   args: {
-    unitId: nonNull(intArg()),
-    data: nonNull(UnitUpdateInputType),
+    id: nonNull(intArg()),
+    data: nonNull(UnitUpdateInput),
   },
-  resolve: async (_, { unitId, data }, { prisma }) => {
-    // Mengupdate unit berdasarkan id
+  resolve: async (_, { id, data }, { prisma }) => {
     try {
       return await prisma.unit.update({
-        where: {
-          id: unitId,  // Mencari unit berdasarkan id
-        },
+        where: { id },
         data,
       });
     } catch (error) {
-      throw new Error('Gagal memperbarui unit : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to update unit: ' + error);
     }
   },
 });
 
 export const deleteUnit = mutationField('deleteUnit', {
-  type: 'Boolean',  // Mengembalikan true jika berhasil dihapus
-  description: 'Delete unit',
+  type: Unit.$name,
+  description: 'Delete an existing unit',
   args: {
-    unitId: nonNull(intArg()),
+    id: nonNull(intArg()),
   },
-  resolve: async (_, { unitId }, { prisma }) => {
+  resolve: async (_, { id }, { prisma }) => {
     try {
-      await prisma.unit.delete({
-        where: {
-          id: unitId,
-        },
+      return await prisma.unit.delete({
+        where: { id },
       });
-      return true;  // Mengembalikan true jika berhasil
     } catch (error) {
-      throw new Error('Gagal menghapus unit : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to delete unit: ' + error);
     }
   },
 });

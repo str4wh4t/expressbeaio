@@ -1,21 +1,32 @@
-import { inputObjectType, list, objectType } from 'nexus';
+import { objectType } from 'nexus';
 import { RoleUnit } from 'nexus-prisma';
 
-export const RoleUnitType = objectType({
+export const RoleUnitObject = objectType({
     name: RoleUnit.$name,
-    description: RoleUnit.$description,
+    description: 'Object representing a role-unit assignment in the system',
     definition(t) {
         t.field(RoleUnit.id);
         t.field(RoleUnit.user);
+        t.field(RoleUnit.user_id);
         t.field(RoleUnit.unit);
+        t.field(RoleUnit.unit_id);
         t.field(RoleUnit.role);
-    }
+        t.field(RoleUnit.role_id);
+        t.field(RoleUnit.created_at);
+        t.field(RoleUnit.updated_at);
+    },
 });
 
-export const ListRoleUnitType = objectType({
-    name: 'ListRoleUnitType',
+export const RoleUnitListObject = objectType({
+    name: 'RoleUnitList',
+    description: 'Object representing a paginated list of role-unit assignments',
     definition(t) {
-        t.field('data', { type: list(RoleUnit.$name) });
-        t.int('total');
+        t.nonNull.list.nonNull.field('data', {
+            type: RoleUnit.$name,
+            description: 'Array of role-unit assignment objects'
+        });
+        t.nonNull.int('total', {
+            description: 'Total count of role-unit assignments matching the query'
+        });
     },
 });

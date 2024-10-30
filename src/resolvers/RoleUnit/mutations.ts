@@ -1,63 +1,56 @@
-import { intArg, mutationField, nonNull } from 'nexus';
+import { mutationField, nonNull, intArg } from 'nexus';
 import { RoleUnit } from 'nexus-prisma';
-import { RoleUnitCreateInputType, RoleUnitUpdateInputType } from './inputs';
+import { RoleUnitCreateInput, RoleUnitUpdateInput } from './inputs';
 
 export const createRoleUnit = mutationField('createRoleUnit', {
   type: RoleUnit.$name,
+  description: 'Create a new role-unit assignment',
   args: {
-    data: nonNull(RoleUnitCreateInputType),
+    data: nonNull(RoleUnitCreateInput),
   },
-  description: 'Create roleUnit',
-  resolve: async (_, { data }, ctx) => {
+  resolve: async (_, { data }, { prisma }) => {
     try {
-      return await ctx.prisma.roleUnit.create({
+      return await prisma.roleUnit.create({
         data,
       });
     } catch (error) {
-      throw new Error('Gagal menambahkan roleUnit : ' + error);
+      throw new Error('Failed to create role-unit assignment: ' + error);
     }
   },
-
 });
 
 export const updateRoleUnit = mutationField('updateRoleUnit', {
-  type: RoleUnit.$name,  // Mengembalikan objek RoleUnit yang diperbarui
-  description: 'Update roleUnit',
+  type: RoleUnit.$name,
+  description: 'Update an existing role-unit assignment',
   args: {
-    roleUnitId: nonNull(intArg()),
-    data: nonNull(RoleUnitUpdateInputType),
+    id: nonNull(intArg()),
+    data: nonNull(RoleUnitUpdateInput),
   },
-  resolve: async (_, { roleUnitId, data }, { prisma }) => {
-    // Mengupdate roleUnit berdasarkan roleUnitId
+  resolve: async (_, { id, data }, { prisma }) => {
     try {
       return await prisma.roleUnit.update({
-        where: {
-          id: roleUnitId,  // Mencari roleUnit berdasarkan id
-        },
+        where: { id },
         data,
       });
     } catch (error) {
-      throw new Error('Gagal memperbarui roleUnit : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to update role-unit assignment: ' + error);
     }
   },
 });
 
 export const deleteRoleUnit = mutationField('deleteRoleUnit', {
-  type: 'Boolean',  // Mengembalikan true jika berhasil dihapus
-  description: 'Delete roleUnit',
+  type: RoleUnit.$name,
+  description: 'Delete an existing role-unit assignment',
   args: {
-    roleUnitId: nonNull(intArg()),
+    id: nonNull(intArg()),
   },
-  resolve: async (_, { roleUnitId }, { prisma }) => {
+  resolve: async (_, { id }, { prisma }) => {
     try {
-      await prisma.roleUnit.delete({
-        where: {
-          id: roleUnitId,
-        },
+      return await prisma.roleUnit.delete({
+        where: { id },
       });
-      return true;  // Mengembalikan true jika berhasil
     } catch (error) {
-      throw new Error('Gagal menghapus roleUnit : ' + error);  // Mengembalikan error jika gagal
+      throw new Error('Failed to delete role-unit assignment: ' + error);
     }
   },
 });

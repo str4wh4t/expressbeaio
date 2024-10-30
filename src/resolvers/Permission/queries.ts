@@ -1,51 +1,52 @@
-import {
-  booleanArg,
-  intArg,
-  list,
-  nonNull,
-  nullable,
-  objectType,
-  queryField,
-  stringArg,
-} from 'nexus';
+import { queryField, nonNull, intArg } from 'nexus';
+import { Permission } from 'nexus-prisma';
+import { PermissionWhereInput } from './inputs';
 
-export const getListPermission = queryField('getListPermission', {
-  type: 'ListPermissionType',
+export const getPermission = queryField('getPermission', {
+  type: Permission.$name,
+  description: 'Get a single permission by ID',
   args: {
-    take: nullable(intArg()),
-    skip: nullable(intArg()),
-    search: nullable(stringArg()),
-    sortBy: nullable(stringArg()),
-    descending: nullable(booleanArg()),
+    id: nonNull(intArg()),
   },
-  resolve: async (
-    _,
-    { take, skip, search, sortBy, descending },
-    { prisma },
-  ) => {
+  resolve: async (_, { id }, { prisma }) => {
+    const permission = await prisma.permission.findUnique({
+      where: { id },
+    });
+    if (!permission) throw new Error('Permission not found');
+    return permission;
+  },
+});
 
-    const where = search ? { name: { contains: search } } : {};
+export const getPermissions = queryField('getPermissions', {
+  type: 'PermissionList',
+  description: 'Get a paginated list of permissions with optional filtering and sorting',
+  args: {
+    where: PermissionWhereInput,
+  },
+  resolve: async (_, { where }, { prisma }) => {
+    const { search, sortBy, descending, take = 10, skip = 0 } = where || {};
 
-    const orderByArg = sortBy
+    const whereClause = search
       ? {
-        [sortBy]: descending ? 'desc' : 'asc',
+        OR: [
+          { name: { contains: search } },
+          { description: { contains: search } },
+        ],
       }
       : {};
 
-    const data = await prisma.permission.findMany({
-      where,
-      orderBy: orderByArg,
-      take: take ? take : 10,
-      skip: skip ? skip : 0,
-    });
+    const orderBy = sortBy ? { [sortBy]: descending ? 'desc' : 'asc' } : undefined;
 
-    const total = await prisma.permission.count({
-      where,
-    });
+    const [data, total] = await Promise.all([
+      prisma.permission.findMany({
+        where: whereClause,
+        orderBy,
+        take,
+        skip,
+      }),
+      prisma.permission.count({ where: whereClause }),
+    ]);
 
-    return {
-      data,
-      total,
-    };
+    return { data, total };
   },
 });

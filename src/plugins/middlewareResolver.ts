@@ -1,5 +1,5 @@
 import { plugin } from 'nexus';
-import { AuthenticationError } from 'apollo-server-core';
+import { GraphQLError } from 'graphql';
 import { verifyToken } from '../utils/jwt';
 
 const filteredTypes = ['Query', 'Mutation'] as const; // Tipe yang akan di-filter
@@ -53,7 +53,9 @@ export const authResolver = plugin({
                     verifyToken(token);
                     return next(root, args, ctx, info); // Lanjutkan ke resolver asli
                 } catch (error) {
-                    throw new AuthenticationError('Not authenticated : ' + error);
+                    throw new GraphQLError("Error : " + error, {
+                        extensions: { code: 'UNAUTHENTICATED' },
+                    });
                 }
             };
         }
@@ -86,7 +88,9 @@ export const roleResolver = plugin({
                     }
                     return next(root, args, ctx, info); // Lanjutkan ke resolver asli
                 } catch (error) {
-                    throw new AuthenticationError('Error selected role : ' + error);
+                    throw new GraphQLError("Error : " + error, {
+                        extensions: { code: 'UNAUTHENTICATED' },
+                    });
                 }
             };
         }

@@ -99,8 +99,8 @@ export const login = mutationField('login', {
         throw new Error('Invalid username or password');
       }
 
-      const roles = await ctx.prisma.role.findMany({ where: { users: { some: { id: user?.id } } }, select: { 'name': true } });
-      const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { users: { some: { id: user?.id } } } } }, select: { 'name': true } });
+      const roles = await ctx.prisma.role.findMany({ where: { users: { some: { id: user?.id } } }, select: { name: true } });
+      const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { users: { some: { id: user?.id } } } } }, select: { name: true } });
       const payload: JwtPayload = {
         userId: user.id,
         roles: roles.map(role => role.name) || [],
@@ -304,10 +304,9 @@ export const selectRole = mutationField('selectRole', {
   resolve: async (_, { roleName }, ctx: Context) => {
     try {
       const userId = ctx.userId || 0;
-      const roles = await ctx.prisma.role.findMany({ where: { users: { some: { id: userId } } }, select: { 'name': true } });
+      const roles = await ctx.prisma.role.findMany({ where: { users: { some: { id: userId } } }, select: { name: true } });
       const selectedRole = await ctx.prisma.role.findFirstOrThrow({ where: { name: roleName, users: { some: { id: userId } } } });
-      const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { name: roleName } } }, select: { 'name': true } });
-
+      const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { name: roleName } } }, select: { name: true } });
       const payload: JwtPayload = {
         userId: ctx.userId || 0,
         roles: roles.map(role => role.name) || [],
@@ -524,8 +523,8 @@ export const loginsso = mutationField('loginsso', {
     //   }
     // }
 
-    const roles = await ctx.prisma.role.findMany({ where: { users: { some: { id: user?.id } } }, select: { 'name': true } });
-    const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { users: { some: { id: user?.id } } } } }, select: { 'name': true } });
+    const roles = await ctx.prisma.role.findMany({ where: { users: { some: { id: user?.id } } }, select: { name: true } });
+    const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { users: { some: { id: user?.id } } } } }, select: { name: true } });
     const payload: JwtPayload = {
       userId: user.id,
       roles: roles.map((role: { name: any; }) => role.name) || [],

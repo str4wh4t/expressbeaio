@@ -17,10 +17,10 @@
     "build": "tsc",
     "dev": "nodemon dist/server.js",
     "generate": "npx zenstack generate && npx prisma db push",
-    "seed": "ts-node seed/app.ts && ts-node seed/roles.ts && ts-node seed/permissions.ts",
-    "seed:roles": "ts-node seed/roles.ts",
-    "seed:permissions": "ts-node seed/permissions.ts",
-    "seed:units": "ts-node seed/units.ts"
+    "seed": "ts-node seeds/app.ts && ts-node seeds/roles.ts && ts-node seeds/permissions.ts",
+    "seed:roles": "ts-node seeds/roles.ts",
+    "seed:permissions": "ts-node seeds/permissions.ts",
+    "seed:units": "ts-node seeds/units.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.11.2",

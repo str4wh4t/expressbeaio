@@ -15,7 +15,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "nodemon dist/server.js",
+    "dev": "nodemon src/server.ts",
     "generate": "npx zenstack generate && npx prisma db push",
     "seed": "ts-node seeds/app.ts && ts-node seeds/roles.ts && ts-node seeds/permissions.ts",
     "seed:roles": "ts-node seeds/roles.ts",
@@ -26,6 +26,7 @@
     "@apollo/server": "^4.11.2",
     "@prisma/client": "^5.21.1",
     "@zenstackhq/runtime": "^2.7.2",
+    "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

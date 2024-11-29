@@ -2,7 +2,7 @@ import { queryField, nonNull, intArg } from 'nexus';
 import { Permission } from 'nexus-prisma';
 import { PermissionWhereInput } from './inputs';
 
-export const getPermission = queryField('getPermission', {
+export const permissionGet = queryField('permissionGet', {
   type: Permission.$name,
   description: 'Get a single permission by ID',
   args: {
@@ -17,7 +17,7 @@ export const getPermission = queryField('getPermission', {
   },
 });
 
-export const getPermissions = queryField('getPermissions', {
+export const permissionPaginatedList = queryField('permissionPaginatedList', {
   type: 'PermissionList',
   description: 'Get a paginated list of permissions with optional filtering and sorting',
   args: {

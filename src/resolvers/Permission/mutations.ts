@@ -2,7 +2,7 @@ import { mutationField, nonNull, intArg } from 'nexus';
 import { Permission } from 'nexus-prisma';
 import { PermissionCreateInput, PermissionUpdateInput } from './inputs';
 
-export const createPermission = mutationField('createPermission', {
+export const permissionCreate = mutationField('permissionCreate', {
   type: Permission.$name,
   description: 'Create a new permission',
   args: {
@@ -19,7 +19,7 @@ export const createPermission = mutationField('createPermission', {
   },
 });
 
-export const updatePermission = mutationField('updatePermission', {
+export const permissionUpdate = mutationField('permissionUpdate', {
   type: Permission.$name,
   description: 'Update an existing permission',
   args: {
@@ -38,7 +38,7 @@ export const updatePermission = mutationField('updatePermission', {
   },
 });
 
-export const deletePermission = mutationField('deletePermission', {
+export const permissionDelete = mutationField('permissionDelete', {
   type: Permission.$name,
   description: 'Delete an existing permission',
   args: {

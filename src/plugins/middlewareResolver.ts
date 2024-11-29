@@ -17,15 +17,16 @@ const filteredAuthFields: AllowedFieldTypes = {
 };
 
 const filteredRoleFields: AllowedFieldTypes = {
-    Query: ['getUser'],
+    Query: ['userGet'],
     Mutation: [
         'login',
-        // 'createUser',
-        'updateUser',
-        // 'deleteUser',
-        'selectRole',
-        // 'assignRole',
-        'resetPassword',
+        // 'userCreate',
+        'userUpdate',
+        // 'userDelete',
+        'userSelectRole',
+        // 'userAssignRoleByIds',
+        'userResetPassword',
+        'userChangePassword',
         'loginsso',
     ],
 };

@@ -2,7 +2,7 @@ import { queryField, nonNull, intArg } from 'nexus';
 import { Unit } from 'nexus-prisma';
 import { UnitWhereInput } from './inputs';
 
-export const getUnit = queryField('getUnit', {
+export const unitGet = queryField('unitGet', {
   type: Unit.$name,
   description: 'Get a single unit by ID',
   args: {
@@ -17,7 +17,7 @@ export const getUnit = queryField('getUnit', {
   },
 });
 
-export const getUnits = queryField('getUnits', {
+export const unitPaginatedList = queryField('unitPaginatedList', {
   type: 'UnitList',
   description: 'Get a paginated list of units with optional filtering and sorting',
   args: {

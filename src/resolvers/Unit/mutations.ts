@@ -2,7 +2,7 @@ import { mutationField, nonNull, intArg } from 'nexus';
 import { Unit } from 'nexus-prisma';
 import { UnitCreateInput, UnitUpdateInput } from './inputs';
 
-export const createUnit = mutationField('createUnit', {
+export const unitCreate = mutationField('unitCreate', {
   type: Unit.$name,
   description: 'Create a new unit',
   args: {
@@ -19,7 +19,7 @@ export const createUnit = mutationField('createUnit', {
   },
 });
 
-export const updateUnit = mutationField('updateUnit', {
+export const unitUpdate = mutationField('unitUpdate', {
   type: Unit.$name,
   description: 'Update an existing unit',
   args: {
@@ -38,7 +38,7 @@ export const updateUnit = mutationField('updateUnit', {
   },
 });
 
-export const deleteUnit = mutationField('deleteUnit', {
+export const unitDelete = mutationField('unitDelete', {
   type: Unit.$name,
   description: 'Delete an existing unit',
   args: {

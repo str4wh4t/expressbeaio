@@ -2,7 +2,7 @@ import { mutationField, nonNull, intArg, list } from 'nexus';
 import { Role } from 'nexus-prisma';
 import { RoleCreateInput, RoleUpdateInput } from './inputs';
 
-export const createRole = mutationField('createRole', {
+export const roleCreate = mutationField('roleCreate', {
     type: Role.$name,
     description: 'Create a new role',
     args: {
@@ -19,7 +19,7 @@ export const createRole = mutationField('createRole', {
     },
 });
 
-export const updateRole = mutationField('updateRole', {
+export const roleUpdate = mutationField('roleUpdate', {
     type: Role.$name,
     description: 'Update an existing role',
     args: {
@@ -38,7 +38,7 @@ export const updateRole = mutationField('updateRole', {
     },
 });
 
-export const deleteRole = mutationField('deleteRole', {
+export const roleDelete = mutationField('roleDelete', {
     type: Role.$name,
     description: 'Delete an existing role',
     args: {
@@ -55,7 +55,7 @@ export const deleteRole = mutationField('deleteRole', {
     },
 });
 
-export const assignPermissions = mutationField('assignPermissions', {
+export const roleAssignPermissions = mutationField('roleAssignPermissions', {
     type: Role.$name,
     description: 'Assign role to permission',
     args: {

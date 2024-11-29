@@ -2,7 +2,6 @@ import { Permission, PrismaClient, Role, User, Unit } from '@prisma/client';
 import { verifyToken } from './utils/jwt';
 import type express from 'express';
 import { enhance } from '@zenstackhq/runtime';
-import { selectRole } from './resolvers';
 
 export interface Context {
     request: express.Request;

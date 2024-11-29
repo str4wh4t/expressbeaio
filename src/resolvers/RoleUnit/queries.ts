@@ -2,7 +2,7 @@ import { queryField, nonNull, intArg } from 'nexus';
 import { RoleUnit } from 'nexus-prisma';
 import { RoleUnitWhereInput } from './inputs';
 
-export const getRoleUnit = queryField('getRoleUnit', {
+export const roleUnitGet = queryField('roleUnitGet', {
   type: RoleUnit.$name,
   description: 'Get a single role-unit assignment by ID',
   args: {
@@ -17,7 +17,7 @@ export const getRoleUnit = queryField('getRoleUnit', {
   },
 });
 
-export const getRoleUnits = queryField('getRoleUnits', {
+export const roleUnitPaginatedList = queryField('roleUnitPaginatedList', {
   type: 'RoleUnitList',
   description: 'Get a paginated list of role-unit assignments with optional filtering and sorting',
   args: {

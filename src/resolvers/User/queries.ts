@@ -2,7 +2,7 @@ import { queryField, nonNull, intArg } from 'nexus';
 import { User } from 'nexus-prisma';
 import { UserWhereInput } from './inputs';
 
-export const getUser = queryField('getUser', {
+export const userGet = queryField('userGet', {
   type: User.$name,
   description: 'Get a single user by ID',
   args: {
@@ -17,7 +17,7 @@ export const getUser = queryField('getUser', {
   },
 });
 
-export const getUsers = queryField('getUsers', {
+export const userPaginatedList = queryField('userPaginatedList', {
   type: 'UserList',
   description: 'Get a paginated list of users with optional filtering and sorting',
   args: {

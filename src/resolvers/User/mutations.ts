@@ -9,7 +9,7 @@ import { PrismaClient } from '@prisma/client';
 import { getEdukData } from '../../datasources/eduk';
 
 
-export const createUser = mutationField('createUser', {
+export const userCreate = mutationField('userCreate', {
   type: User.$name,
   description: 'Create a new user',
   args: {
@@ -26,7 +26,7 @@ export const createUser = mutationField('createUser', {
   },
 });
 
-export const updateUser = mutationField('updateUser', {
+export const userUpdate = mutationField('userUpdate', {
   type: User.$name,
   description: 'Update an existing user',
   args: {
@@ -45,7 +45,7 @@ export const updateUser = mutationField('updateUser', {
   },
 });
 
-export const deleteUser = mutationField('deleteUser', {
+export const userDelete = mutationField('userDelete', {
   type: User.$name,
   description: 'Delete an existing user',
   args: {
@@ -62,7 +62,7 @@ export const deleteUser = mutationField('deleteUser', {
   },
 });
 
-export const resetPassword = mutationField('resetPassword', {
+export const userResetPassword = mutationField('userResetPassword', {
   type: User.$name,
   description: 'Reset user password',
   args: {
@@ -109,14 +109,14 @@ export const login = mutationField('login', {
         permissions: permissions.map(permission => permission.name) || [],
       }
 
-      return generateToken(payload);
+      return generateToken(payload, process.env.TOKEN_HOURS || '1h');
     } catch (error) {
       throw new Error('Failed to login: ' + error);
     }
   },
 });
 
-export const changePassword = mutationField('changePassword', {
+export const userChangePassword = mutationField('userChangePassword', {
   type: User.$name,
   description: 'Change user password',
   args: {
@@ -189,7 +189,7 @@ const userAssignRoleByIdsFunc = async (userId: number, roleIds: number[], prisma
   });
 };
 
-export const assignRoleByIds = mutationField('assignRoleByIds', {
+export const userAssignRoleByIds = mutationField('userAssignRoleByIds', {
   type: User.$name,
   description: 'Assign role to user',
   args: {
@@ -209,7 +209,7 @@ export const assignRoleByIds = mutationField('assignRoleByIds', {
   },
 });
 
-export const assignRoleToUnits = mutationField('assignRoleToUnits', {
+export const userAssignRoleToUnits = mutationField('userAssignRoleToUnits', {
   type: User.$name,
   description: 'Assign role to user unit by unit ids',
   args: {
@@ -295,7 +295,7 @@ export const assignRoleToUnits = mutationField('assignRoleToUnits', {
   },
 });
 
-export const selectRole = mutationField('selectRole', {
+export const userSelectRole = mutationField('userSelectRole', {
   type: 'String',
   description: 'Select role to user',
   args: {
@@ -315,14 +315,14 @@ export const selectRole = mutationField('selectRole', {
         selectedUnit: null,
       }
 
-      return generateToken(payload);
+      return generateToken(payload, process.env.TOKEN_HOURS || '1h');
     } catch (error) {
       throw new Error('Failed to select role: ' + error);
     }
   },
 });
 
-export const selectUnit = mutationField('selectUnit', {
+export const userRoleSelectUnit = mutationField('userRoleSelectUnit', {
   type: 'String',
   description: 'Select unit to user role',
   args: {
@@ -343,7 +343,7 @@ export const selectUnit = mutationField('selectUnit', {
         selectedUnit: roleUnit.unit,
       }
 
-      return generateToken(payload);
+      return generateToken(payload, process.env.TOKEN_HOURS || '1h');
     } catch (error) {
       throw new Error('Failed to select role: ' + error);
     }
@@ -533,7 +533,7 @@ export const loginsso = mutationField('loginsso', {
       selectedUnit: null,
     }
 
-    return generateToken(payload);
+    return generateToken(payload, process.env.TOKEN_HOURS || '1h');
 
   }
 });

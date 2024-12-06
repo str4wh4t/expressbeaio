@@ -2,10 +2,10 @@ import { makeSchema } from 'nexus';
 import * as resolvers from './resolvers';
 import * as scalars from './types/scalar';
 import path from 'path';
-import { authResolver, roleResolver } from './plugins/middlewareResolver';
+import { authResolver, authRoleResolver, limiterResolver } from './plugins/middlewareResolver';
 
 
-const middleware = [authResolver, roleResolver];
+const middleware = [authResolver, authRoleResolver, limiterResolver];
 
 export const schema = makeSchema({
   types: [resolvers, scalars],

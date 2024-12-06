@@ -10,6 +10,7 @@ import { createContext } from './context';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import morgan from 'morgan';
 
 const port = process.env.PORT || 4000;
 const app = createServer();
@@ -20,14 +21,25 @@ const apollo = new ApolloServer({
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
 });
 
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN?.split(',') || ['http://localhost:3000']; // fallback ke nilai default untuk semua nilai falsy, termasuk null, undefined, string kosong '', atau array kosong []
+
+// Konfigurasi opsi CORS
+const corsOptions: cors.CorsOptions = {
+  origin: CLIENT_ORIGIN, // Alamat asal yang diizinkan
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'], // Metode HTTP yang diizinkan
+  credentials: true, // Mengizinkan pengiriman cookie atau header Authorization
+};
+
 const startServer = async (app: express.Application, apollo: ApolloServer) => {
   await apollo.start();
-  // apollo.applyMiddleware({ app });
+
+  if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev')); // Menampilkan log request ke console
+  }
 
   app.use(
-    '/graphql',
-    cors<cors.CorsRequest>(),
-    express.json(),
+    cors<cors.CorsRequest>(corsOptions),
+    express.json(), // Agar bisa mengurai body berformat JSON dan menjadikannya object
     expressMiddleware(apollo, {
       context: async ({ req, res }) => await createContext({ req, res }) // Menggunakan createContext
     })

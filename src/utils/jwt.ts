@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { Permission, Role, User, Unit } from '@prisma/client';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key'; // Ambil secret dari environment
@@ -18,7 +18,7 @@ export interface JwtPayload {
  * @returns string - Token JWT
  */
 export const generateToken = (payload: JwtPayload, expiresIn: string = '1h'): string => {
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn });
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn } as SignOptions);
   return token;
 };
 

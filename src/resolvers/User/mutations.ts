@@ -107,10 +107,10 @@ export const login = mutationField('login', {
       const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { users: { some: { id: user?.id } } } } }, select: { name: true } });
       const payload: JwtPayload = {
         userId: user.id,
-        roles: roles.map(role => role.name) || [],
+        roles: roles.map((role: { name: string }) => role.name) || [],
         selectedRole: null,
         selectedUnit: null,
-        permissions: permissions.map(permission => permission.name) || [],
+        permissions: permissions.map((permission: { name: string }) => permission.name) || [],
       }
 
       return generateToken(payload, process.env.TOKEN_HOURS || '1h');
@@ -166,7 +166,7 @@ const userAssignRoleByNamesFunc = async (userId: number, roleNames: string[], pr
   }
 
   // Ekstrak role IDs dari hasil query
-  roleIds = foundRoles.map((role) => role.id);
+  roleIds = foundRoles.map((role: { id: number }) => role.id);
 
   return prisma.user.update({
     where: {
@@ -313,9 +313,9 @@ export const userSelectRole = mutationField('userSelectRole', {
       const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { name: roleName } } }, select: { name: true } });
       const payload: JwtPayload = {
         userId: ctx.userId || 0,
-        roles: roles.map(role => role.name) || [],
+        roles: roles.map((role: { name: string }) => role.name) || [],
         selectedRole: selectedRole,
-        permissions: permissions.map(permission => permission.name) || [],
+        permissions: permissions.map((permission: { name: string }) => permission.name) || [],
         selectedUnit: null,
       }
 

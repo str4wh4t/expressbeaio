@@ -7,27 +7,27 @@ import type express from 'express';
 const filteredTypes = ['Query', 'Mutation'] as const; // Tipe yang akan di-filter
 
 // Tipe untuk memastikan hanya 'Query' dan 'Mutation' yang valid
-type AllowedFieldTypes = {
+type FieldTypes = {
     Query: string[];
     Mutation: string[];
 };
 
-// Deklarasikan `allowedFields` dengan tipe `AllowedFieldTypes`
-const filteredAuthFields: AllowedFieldTypes = {
+// Deklarasikan `allowedFields` dengan tipe `FieldTypes`
+const nonAuthAllowedFieldTypes: FieldTypes = {
     Query: [], // Memberikan tipe eksplisit pada array kosong
-    Mutation: ['login', 'loginsso'], // Memberikan tipe eksplisit pada array kosong
+    Mutation: ['login'], // Memberikan tipe eksplisit pada array kosong
 };
 
 export const authResolver = plugin({
     name: 'authResolver',
     onCreateFieldResolver(config) {
         const { parentTypeConfig, fieldConfig } = config;
-        const parentTypeName = parentTypeConfig.name as keyof typeof filteredAuthFields; // Nama tipe induk, seperti 'Query' atau 'Mutation'
+        const parentTypeName = parentTypeConfig.name as keyof typeof nonAuthAllowedFieldTypes; // Nama tipe induk, seperti 'Query' atau 'Mutation'
         const fieldName = fieldConfig.name; // Nama field, seperti 'hello' atau 'createMessage'
 
         if (
             filteredTypes.includes(parentTypeName) // Mengecek apakah tipe termasuk dalam filteredTypes
-            && !filteredAuthFields[parentTypeName]?.includes(fieldName) // Mengecek apakah field ada dalam daftar filteredFields untuk tipe tersebut
+            && !nonAuthAllowedFieldTypes[parentTypeName]?.includes(fieldName) // Mengecek apakah field ada dalam daftar filteredFields untuk tipe tersebut
         ) {
             // Middleware resolver yang dijalankan sebelum resolver asli
             return async (root, args, ctx, info, next) => {
@@ -50,7 +50,7 @@ export const authResolver = plugin({
     }
 });
 
-const filteredAuthRoleFields: AllowedFieldTypes = {
+const nonAuthRoleAllowedFields: FieldTypes = {
     Query: ['userGet'],
     Mutation: [
         'login',
@@ -61,7 +61,6 @@ const filteredAuthRoleFields: AllowedFieldTypes = {
         // 'userAssignRole',
         'userResetPassword',
         'userChangePassword',
-        'loginsso',
     ],
 };
 
@@ -69,12 +68,12 @@ export const authRoleResolver = plugin({
     name: 'authRoleResolver',
     onCreateFieldResolver(config) {
         const { parentTypeConfig, fieldConfig } = config;
-        const parentTypeName = parentTypeConfig.name as keyof typeof filteredAuthRoleFields;
+        const parentTypeName = parentTypeConfig.name as keyof typeof nonAuthRoleAllowedFields;
         const fieldName = fieldConfig.name;
 
         if (
             filteredTypes.includes(parentTypeName)
-            && !filteredAuthRoleFields[parentTypeName]?.includes(fieldName)
+            && !nonAuthRoleAllowedFields[parentTypeName]?.includes(fieldName)
         ) {
             return async (root, args, ctx, info, next) => {
                 const token = ctx.request.headers.authorization || '';
@@ -98,7 +97,7 @@ export const authRoleResolver = plugin({
 
 const rateLimiter = new RateLimiterMemory({
     points: process.env.RATE_LIMITER_COUNT ? parseInt(process.env.RATE_LIMITER_COUNT) : 10, // Maksimal 10 permintaan
-    duration: process.env.RATE_LIMITER_MINUTES ? parseInt(process.env.RATE_LIMITER_MINUTES) : 60, // Dalam 60 detik
+    duration: process.env.RATE_LIMITER_SECONDS ? parseInt(process.env.RATE_LIMITER_SECONDS) : 60, // Dalam 60 detik
 });
 
 const getClientIp = (req: express.Request) => {
@@ -112,7 +111,7 @@ const getClientIp = (req: express.Request) => {
     return req.socket.remoteAddress;
 };
 
-const filteredLimitFields: AllowedFieldTypes = {
+const limitedFieldTypes: FieldTypes = {
     Query: [],
     Mutation: ['login'],
 };
@@ -121,11 +120,11 @@ export const limiterResolver = plugin({
     name: 'limiterResolver',
     onCreateFieldResolver(config) {
         const { parentTypeConfig, fieldConfig } = config;
-        const parentTypeName = parentTypeConfig.name as keyof typeof filteredLimitFields;
+        const parentTypeName = parentTypeConfig.name as keyof typeof limitedFieldTypes;
         const fieldName = fieldConfig.name;
         if (
             filteredTypes.includes(parentTypeName)
-            && filteredLimitFields[parentTypeName]?.includes(fieldName)
+            && limitedFieldTypes[parentTypeName]?.includes(fieldName)
         ) {
             return async (root, args, ctx, info, next) => {
                 try {

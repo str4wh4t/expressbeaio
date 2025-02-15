@@ -7,7 +7,11 @@ import { Context } from '../../context';
 import { PASSWORD_LOGIN_DEFAULT } from '../../utils/constants';
 import { PrismaClient } from '@prisma/client';
 import { getEdukData } from '../../datasources/eduk';
-
+import { StatusResponseObject } from './objects';
+import * as xlsx from 'xlsx';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import fs from 'fs';
 
 export const userCreate = mutationField('userCreate', {
   type: User.$name,
@@ -350,190 +354,135 @@ export const userRoleSelectUnit = mutationField('userRoleSelectUnit', {
   },
 });
 
-export const loginsso = mutationField('loginsso', {
-  type: 'String',
+export const userCreateByExcel = mutationField('userCreateByExcel', {
+  type: StatusResponseObject,
+  description: 'Create users from excel file',
   args: {
-    token: nonNull(stringArg()),
+    file: 'Upload',
   },
-  resolve: async (_, { token }, ctx) => {
-    //get data from sso
-    const data = await fetch('https://graph.microsoft.com/v1.0/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }).then((res) => res.json());
+  resolve: async (_, { file }, { prisma }) => {
+    try {
+      const { createReadStream, filename } = await file;
 
-    // console.log(data);
-
-    if (data.error) {
-      throw new Error(data.error.message)
-    }
-    const sso_identity = data.surname;
-    const sso_email = data.mail;
-    if (sso_identity.length == 14) {
-      throw new Error('Akses mahasiswa belum diizinkan')
-    }
-    // console.log(data)
-
-    //cek apakah user sudah ada di database
-    let user = await ctx.prisma.user.findUnique({
-      where: {
-        identity: sso_identity,
-      },
-    });
-
-    const dataEduk = await getEdukData(sso_identity);
-    const errorEduk = 'Silahkan cek email SSO yang Anda gunakan atau status pegawai Anda di Eduk terlebih dahulu. Email SSO yg Anda gunakan: ' + sso_email + ' dengan NIP: ' + sso_identity;
-    // console.log(dataEduk);
-    if (!dataEduk) {
-      throw new Error('Data pegawai Anda tidak ditemukan di Eduk. ' + errorEduk);
-    }
-
-    if (![1, 6, 13, 15, 20, 22].includes(dataEduk.status)) {
-      throw new Error('Status pegawai Anda tidak aktif. ' + errorEduk);
-    }
-
-    // const edukFoto = dataEduk.foto ? `https://e-duk.apps.undip.ac.id/images/foto/${dataEduk.foto}` : null;
-    const edukFoto = dataEduk.foto ? dataEduk.foto : null;
-
-    if (!user) {
-      //create new user
-      const createUser = await ctx.prisma.user.create({
-        data: {
-          name: data.displayName,
-          email: data.mail,
-          identity: sso_identity,
-          profile_photo_path: edukFoto,
-
-          unit1_id: dataEduk.unit_id || null,
-          unit2_id: dataEduk.unit2_id || null,
-          unit3_id: dataEduk.unit3_id || null,
-          unit1_name: dataEduk.unit_name || null,
-          unit2_name: dataEduk.unit2_name || null,
-          unit3_name: dataEduk.unit3_name || null,
-
-          gelar_depan: dataEduk.gelar_depan || null,
-          gelar_belakang: dataEduk.gelar_belakang || null,
-        },
-      });
-
-      if (!createUser) {
-        throw new Error('Gagal membuat user baru')
+      if (!filename.endsWith('.xlsx') && !filename.endsWith('.xls')) {
+        throw new Error('File must be an Excel (.xlsx atau .xls)');
       }
 
-      // await ctx.prisma.userHasRoles.create({
-      //   data: {
-      //     model_id: user.id,
-      //     role_id: 2,
-      //     // unit_id: dataEduk.unit_id || null,
-      //     // unit2_id: dataEduk.unit2_id || null,
-      //     // unit3_id: dataEduk.unit3_id || null,
-      //   },
-      // });
+      const stream = createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      const workbook = xlsx.read(buffer, { type: 'buffer' });
 
-      await userAssignRoleByIdsFunc(createUser.id, [2], ctx.prisma);
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        throw new Error('First sheet pertama is not found in excel file');
+      }
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = xlsx.utils.sheet_to_json(sheet);
 
-      user = await ctx.prisma.user.findUnique({
-        where: {
-          id: createUser.id,
-        },
-      });
+      // console.log('jsonData', jsonData);
 
+      const affectedRows: string[] = [];
+      const failedRows: string[] = [];
+
+      for (const row of jsonData as User[]) {
+        if (!row.username) {
+          throw new Error(`Username cannot be blank`);
+        }
+        try {
+          const existingUser = await prisma.user.findFirst({
+            where: {
+              username: row.username,
+            },
+          });
+
+          let newUser = null;
+
+          if (existingUser) {
+            newUser = await prisma.user.update({
+              where: {
+                username: row.username,
+              },
+              data: {
+                name: "" + row.name,
+                identity: "" + row.identity,
+                email: "" + row.email,
+              },
+            });
+          } else {
+            newUser = await prisma.user.create({
+              data: {
+                uuid: uuidv4(),
+                name: "" + row.name,
+                username: "" + row.username,
+                identity: "" + row.identity,
+                email: "" + row.email,
+                password: PASSWORD_LOGIN_DEFAULT,
+              },
+            });
+          }
+
+          affectedRows.push("" + row.username);
+
+        } catch (error) {
+          throw new Error("" + error);
+          failedRows.push("" + row.username || 'UNKNOWN');
+        }
+      }
+
+      return {
+        message: `(${affectedRows.length}) user proceed successfully. (${failedRows.length}) failed.`,
+        status: 'success',
+        tagsSuccess: affectedRows,
+        tagsFailed: failedRows,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Error proceed user: ${error.message}`);
+      }
+      throw new Error(`Error proceed user: ${error}`);
     }
+  },
+});
 
-    //update foto profil
-    if (user.profile_photo_path != edukFoto) {
-      await ctx.prisma.user.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          profile_photo_path: edukFoto,
-        },
-      });
+export const userTemplateCreateExcel = mutationField('userTemplateCreateExcel', {
+  type: 'String',
+  description: 'Download template create user ke file Excel',
+  resolve: async (_, __, { prisma }) => {
+    try {
+      const jsonData = [
+        {
+          username: '',
+          name: '',
+          identity: '',
+          email: '',
+        }
+      ];
+
+      const worksheet = xlsx.utils.json_to_sheet(jsonData);
+      const workbook = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(workbook, worksheet, 'User');
+
+      const dir_name = 'downloads';
+      const file_name = 'template_create_user.xlsx';
+
+      const filePath = path.join(__dirname + '../../../../', dir_name, file_name);
+
+      if (!fs.existsSync(path.dirname(filePath))) {
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      }
+
+      xlsx.writeFile(workbook, filePath);
+
+      return path.join('/', dir_name, file_name);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed download template create mahasiswa: ${error.message}`);
+      }
+      throw new Error(`Failed download template create mahasiswa: ${error}`);
     }
-
-    //update unit
-    // if (user.unit_id != dataEduk.unit_id || user.unit2_id != dataEduk.unit2_id || user.unit3_id != dataEduk.unit3_id || user.unit_name != dataEduk.unit_name || user.unit2_name != dataEduk.unit2_name || user.unit3_name != dataEduk.unit3_name) {
-    //   await ctx.prisma.user.update({
-    //     where: {
-    //       id: user.id,
-    //     },
-    //     data: {
-    //       unit_id: dataEduk.unit_id || null,
-    //       unit2_id: dataEduk.unit2_id || null,
-    //       unit3_id: dataEduk.unit3_id || null,
-    //       unit_name: dataEduk.unit_name || null,
-    //       unit2_name: dataEduk.unit2_name || null,
-    //       unit3_name: dataEduk.unit3_name || null,
-    //     },
-    //   });
-    // }
-
-    //update nama dan gelar di eduk
-    // if (user.name != dataEduk.nama || user.gelar_depan != dataEduk.gelar_depan || user.gelar_belakang != dataEduk.gelar_belakang) {
-    //   await ctx.prisma.user.update({
-    //     where: {
-    //       id: user.id,
-    //     },
-    //     data: {
-    //       name: dataEduk.nama,
-    //       gelar_depan: dataEduk.gelar_depan || null,
-    //       gelar_belakang: dataEduk.gelar_belakang || null,
-    //     },
-    //   });
-    // }
-
-    // if (device_checksum) {
-    //   //cek device_checksum di user lain
-    //   const deviceAnotherUser = await ctx.prisma.user.findFirst({
-    //     where: {
-    //       AND: [
-    //         {
-    //           device_checksum: device_checksum,
-    //         },
-    //         {
-    //           id: {
-    //             not: user.id,
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   });
-    //   if (deviceAnotherUser) {
-    //     throw new Error('Device ini sudah digunakan oleh user lain')
-    //   }
-
-    //   //cek device_checksum
-    //   if (user.device_checksum == null) {
-    //     //setelah reset jadi null
-    //     if (device_checksum != null) {
-    //       await ctx.prisma.user.update({
-    //         where: {
-    //           id: user.id,
-    //         },
-    //         data: {
-    //           device_checksum: device_checksum,
-    //         },
-    //       });
-    //     }
-
-    //   } else if (user.device_checksum != device_checksum) {
-    //     throw new Error('Device yang digunakan tidak sama, silahkan hubungi Admin untuk reset device')
-    //   }
-    // }
-
-    const roles = await ctx.prisma.role.findMany({ where: { users: { some: { id: user?.id } } }, select: { name: true } });
-    const permissions = await ctx.prisma.permission.findMany({ where: { roles: { some: { users: { some: { id: user?.id } } } } }, select: { name: true } });
-    const payload: JwtPayload = {
-      userId: user.id,
-      roles: roles.map((role: { name: any; }) => role.name) || [],
-      selectedRole: null,
-      permissions: permissions.map((permission: { name: any; }) => permission.name) || [],
-      selectedUnit: null,
-    }
-
-    return generateToken(payload, process.env.TOKEN_HOURS || '1h');
-
   }
 });

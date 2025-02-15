@@ -12,26 +12,17 @@ datasource db {
 }
 
 model User {
-  id                  Int        @id @default(autoincrement())
-  name                String
-  username            String     @unique @length(min: 3)
-  identity            String     @unique
-  email               String     @unique @email('must be a valid email')
-  password            String     @password @length(min: 8)
-  roles               Role[]     @relation("UserRole")
-  roleUnits           RoleUnit[]
-  eduk_status         String?
-  eduk_foto           String?
-  eduk_unit_1         Int?
-  eduk_unit_1_name    String?
-  eduk_unit_2         Int?
-  eduk_unit_2_name    String?
-  eduk_unit_3         Int?
-  eduk_unit_3_name    String?
-  eduk_gelar_depan    String?
-  eduk_gelar_belakang String?
-  created_at          DateTime   @default(now())
-  updated_at          DateTime   @updatedAt
+  id         Int        @id @default(autoincrement())
+  uuid       String     @unique @default(uuid())
+  name       String
+  username   String     @unique @length(min: 3)
+  identity   String     @unique
+  email      String     @unique @email('must be a valid email')
+  password   String     @password @length(min: 8)
+  roles      Role[]     @relation("UserRole")
+  roleUnits  RoleUnit[]
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
 
   @@allow('all', auth().roles?[name == 'system'])
   @@allow('read', true)

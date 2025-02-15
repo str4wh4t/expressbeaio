@@ -1,6 +1,8 @@
 import { plugin } from 'nexus';
 import { GraphQLError } from 'graphql';
 import { verifyToken } from '../utils/jwt';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import type express from 'express';
 
 const filteredTypes = ['Query', 'Mutation'] as const; // Tipe yang akan di-filter
 
@@ -96,6 +98,53 @@ export const roleResolver = plugin({
             };
         }
 
+        return undefined;
+    }
+});
+
+const rateLimiter = new RateLimiterMemory({
+    points: process.env.RATE_LIMITER_COUNT ? parseInt(process.env.RATE_LIMITER_COUNT) : 10, // Maksimal 10 permintaan
+    duration: process.env.RATE_LIMITER_MINUTES ? parseInt(process.env.RATE_LIMITER_MINUTES) : 60, // Dalam 60 detik
+});
+
+const getClientIp = (req: express.Request) => {
+    const xForwardedFor = req.headers['x-forwarded-for'];
+    if (xForwardedFor) {
+        // Ambil IP pertama dari daftar (jika ada banyak proxy)
+        if (typeof xForwardedFor === 'string') {
+            return xForwardedFor.split(',')[0].trim();
+        }
+    }
+    return req.socket.remoteAddress;
+};
+
+const filteredLimitFields: AllowedFieldTypes = {
+    Query: [],
+    Mutation: ['login'],
+};
+
+export const limiterResolver = plugin({
+    name: 'limiterResolver',
+    onCreateFieldResolver(config) {
+        const { parentTypeConfig, fieldConfig } = config;
+        const parentTypeName = parentTypeConfig.name as keyof typeof filteredLimitFields;
+        const fieldName = fieldConfig.name;
+        if (
+            filteredTypes.includes(parentTypeName)
+            && filteredLimitFields[parentTypeName]?.includes(fieldName)
+        ) {
+            return async (root, args, ctx, info, next) => {
+                try {
+                    const ip = getClientIp(ctx.request) || '::1';
+                    await rateLimiter.consume(ip);
+                    return next(root, args, ctx, info);
+                } catch (error) {
+                    throw new GraphQLError("Errors : " + error, {
+                        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+                    });
+                }
+            };
+        }
         return undefined;
     }
 });

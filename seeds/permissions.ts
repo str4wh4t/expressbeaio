@@ -8,7 +8,6 @@ async function main() {
     // Array of permissions to seed
     const permissions = [
         { name: 'access-control', description: 'Access control' },
-        { name: 'crud-arsip', description: 'Crud arsip' },
     ];
 
     // Use createMany to seed all permissions at once

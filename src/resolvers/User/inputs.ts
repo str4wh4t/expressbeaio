@@ -19,36 +19,6 @@ export const UserCreateInput = inputObjectType({
         t.nonNull.string('password', {
             description: 'Password for login (required, min length: 8)'
         });
-        t.string('eduk_status', {
-            description: 'Education status'
-        });
-        t.string('eduk_foto', {
-            description: 'URL to user photo'
-        });
-        t.int('eduk_unit_1', {
-            description: 'Primary unit ID'
-        });
-        t.string('eduk_unit_1_name', {
-            description: 'Primary unit name'
-        });
-        t.int('eduk_unit_2', {
-            description: 'Secondary unit ID'
-        });
-        t.string('eduk_unit_2_name', {
-            description: 'Secondary unit name'
-        });
-        t.int('eduk_unit_3', {
-            description: 'Tertiary unit ID'
-        });
-        t.string('eduk_unit_3_name', {
-            description: 'Tertiary unit name'
-        });
-        t.string('eduk_gelar_depan', {
-            description: 'Front title'
-        });
-        t.string('eduk_gelar_belakang', {
-            description: 'Back title'
-        });
     },
 });
 
@@ -70,36 +40,6 @@ export const UserUpdateInput = inputObjectType({
         // });
         t.string('password', {
             description: 'Updated password (min length: 8)'
-        });
-        t.string('eduk_status', {
-            description: 'Updated education status'
-        });
-        t.string('eduk_foto', {
-            description: 'Updated URL to user photo'
-        });
-        t.int('eduk_unit_1', {
-            description: 'Updated primary unit ID'
-        });
-        t.string('eduk_unit_1_name', {
-            description: 'Updated primary unit name'
-        });
-        t.int('eduk_unit_2', {
-            description: 'Updated secondary unit ID'
-        });
-        t.string('eduk_unit_2_name', {
-            description: 'Updated secondary unit name'
-        });
-        t.int('eduk_unit_3', {
-            description: 'Updated tertiary unit ID'
-        });
-        t.string('eduk_unit_3_name', {
-            description: 'Updated tertiary unit name'
-        });
-        t.string('eduk_gelar_depan', {
-            description: 'Updated front title'
-        });
-        t.string('eduk_gelar_belakang', {
-            description: 'Updated back title'
         });
     },
 });

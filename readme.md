@@ -1,3 +1,8 @@
+requirement
+
+1. npm : ^10.8.3
+2. node : ^20.17.0
+
 langkah install
 
 1. git clone

@@ -18,26 +18,10 @@ const filteredAuthFields: AllowedFieldTypes = {
     Mutation: ['login', 'loginsso'], // Memberikan tipe eksplisit pada array kosong
 };
 
-const filteredRoleFields: AllowedFieldTypes = {
-    Query: ['userGet'],
-    Mutation: [
-        'login',
-        // 'userCreate',
-        'userUpdate',
-        // 'userDelete',
-        'userSelectRole',
-        // 'userAssignRoleByIds',
-        'userResetPassword',
-        'userChangePassword',
-        'loginsso',
-    ],
-};
-
 export const authResolver = plugin({
     name: 'authResolver',
     onCreateFieldResolver(config) {
         const { parentTypeConfig, fieldConfig } = config;
-        const parentTypeName_ = parentTypeConfig.name;
         const parentTypeName = parentTypeConfig.name as keyof typeof filteredAuthFields; // Nama tipe induk, seperti 'Query' atau 'Mutation'
         const fieldName = fieldConfig.name; // Nama field, seperti 'hello' atau 'createMessage'
 
@@ -56,7 +40,7 @@ export const authResolver = plugin({
                     verifyToken(token);
                     return next(root, args, ctx, info); // Lanjutkan ke resolver asli
                 } catch (error) {
-                    throw new GraphQLError("Error : " + error, {
+                    throw new GraphQLError("Errors : " + error, {
                         extensions: { code: 'UNAUTHENTICATED' },
                     });
                 }
@@ -66,32 +50,42 @@ export const authResolver = plugin({
     }
 });
 
-export const roleResolver = plugin({
-    name: 'roleResolver',
+const filteredAuthRoleFields: AllowedFieldTypes = {
+    Query: ['userGet'],
+    Mutation: [
+        'login',
+        // 'userCreate',
+        'userUpdate',
+        // 'userDelete',
+        'userSelectRole',
+        // 'userAssignRole',
+        'userResetPassword',
+        'userChangePassword',
+        'loginsso',
+    ],
+};
+
+export const authRoleResolver = plugin({
+    name: 'authRoleResolver',
     onCreateFieldResolver(config) {
         const { parentTypeConfig, fieldConfig } = config;
-        const parentTypeName = parentTypeConfig.name as keyof typeof filteredRoleFields;
+        const parentTypeName = parentTypeConfig.name as keyof typeof filteredAuthRoleFields;
         const fieldName = fieldConfig.name;
 
         if (
             filteredTypes.includes(parentTypeName)
-            && !filteredRoleFields[parentTypeName]?.includes(fieldName)
+            && !filteredAuthRoleFields[parentTypeName]?.includes(fieldName)
         ) {
-            // Middleware resolver yang dijalankan sebelum resolver asli
             return async (root, args, ctx, info, next) => {
-                // Cek jika field membutuhkan autentikasi
-                // if (config.fieldConfig.extensions?.hasOwnProperty('noRole')) {
-                //     return next(root, args, ctx, info); // Lanjutkan ke resolver asli
-                // }
                 const token = ctx.request.headers.authorization || '';
                 try {
                     const payload = verifyToken(token);
                     if (!payload.selectedRole) {
                         throw new Error('Role not found');
                     }
-                    return next(root, args, ctx, info); // Lanjutkan ke resolver asli
+                    return next(root, args, ctx, info);
                 } catch (error) {
-                    throw new GraphQLError("Error : " + error, {
+                    throw new GraphQLError("Errors : " + error, {
                         extensions: { code: 'UNAUTHENTICATED' },
                     });
                 }

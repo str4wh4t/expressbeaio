@@ -40,7 +40,6 @@ const startServer = async (app: express.Application, apollo: ApolloServer) => {
     app.use(morgan('dev')); // Menampilkan log request ke console
   }
 
-
   app.use(
     cors<cors.CorsRequest>(corsOptions),
     express.json(), // Agar bisa mengurai body berformat JSON dan menjadikannya object

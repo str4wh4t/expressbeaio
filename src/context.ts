@@ -1,7 +1,7 @@
 import { Permission, PrismaClient, Role, User, Unit } from '@prisma/client';
 import { verifyToken } from './utils/jwt';
 import type express from 'express';
-import { enhance } from '@zenstackhq/runtime';
+import { enhancePrisma } from './prisma';
 
 export interface Context {
     request: express.Request;
@@ -25,7 +25,7 @@ export const createContext = async (params: CreateContextParams): Promise<Contex
     const context: Context = {
         request: params.req,
         response: params.res,
-        prisma: enhance(new PrismaClient()),
+        prisma: await enhancePrisma(),
         userId: null,
         roles: null,
         selectedRole: null,
@@ -43,25 +43,21 @@ export const createContext = async (params: CreateContextParams): Promise<Contex
         const selectedUnit = token.selectedUnit;
         const permissions = token.permissions;
 
-        // const user = await (new PrismaClient()).user.findUnique({ where: { id: userId } });
+        // const user = await (new PrismaClient()).user.findUnique({
+        //     where: { id: userId },
+        //     include: { roles: true }, // Pastikan roles ter-load
+        // });
 
-        const user = await (new PrismaClient()).user.findUnique({
-            where: { id: userId },
-            include: { roles: true }, // Pastikan roles ter-load
-        });
-
-        if (!user) {
-            throw new Error("User not found");
-        }
-
-        const prisma = enhance(new PrismaClient(), { user });
+        // if (!user) {
+        //     throw new Error("User not found");
+        // }
 
         context.userId = userId;
         context.roles = roles
         context.selectedRole = selectedRole;
         context.selectedUnit = selectedUnit;
         context.permissions = permissions;
-        context.prisma = prisma;
+        context.prisma = await enhancePrisma(userId);
         context.isAuthenticated = true;
     }
 
